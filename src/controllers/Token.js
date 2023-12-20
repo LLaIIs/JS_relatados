@@ -1,4 +1,5 @@
-import User from '../models/UserM';
+import jwt from 'jsonwebtoken';
+import User from '../models/User';
 
 class TokenController {
   async store(req, res) {
@@ -18,7 +19,16 @@ class TokenController {
           errors: ['Usuário não existe'],
         });
       }
-      return res.json('ok');
+
+      if (!(await user.passwordIsValid(password))) {
+        return res.status(401).json({
+          errors: ['Senha inválida'],
+        });
+      }
+      const { id } = user;
+      // eslint-disable-next-line max-len
+      const token = jwt.sign({ id, email }, process.env.TOKEN_SECRET, { expiresIn: process.env.TOKEN_EXPIRATION });
+      return res.json({ token });
     } catch (e) {
       console.log(e);
     }
